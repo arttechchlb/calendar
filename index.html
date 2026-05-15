@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>💳 Платежный календарь</title>
+  <style>
+    :root {
+      --text-primary: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-tertiary: #aeaeb2;
+      --card-bg: rgba(255,255,255,0.85);
+      --card-border: rgba(255,255,255,0.4);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+      --radius: 20px;
+      --radius-sm: 12px;
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; min-height: 100vh;
+      font-family: var(--font);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: ""; position: fixed; inset: 0; z-index: -2;
+      background: linear-gradient(180deg, #87CEEB 0%, #a8d8f0 25%, #c1e8d0 55%, #7cc27c 75%, #4a8c3f 100%);
+    }
+    body::after {
+      content: ""; position: fixed; inset: 0; z-index: -1;
+      background:
+        radial-gradient(ellipse 180px 60px at 20% 15%, rgba(255,255,255,0.7) 0%, transparent 100%),
+        radial-gradient(ellipse 140px 50px at 55% 10%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(ellipse 200px 70px at 80% 20%, rgba(255,255,255,0.6) 0%, transparent 100%);
+      animation: drift 20s ease-in-out infinite alternate;
+    }
+    @keyframes drift { from { transform: translateX(-10px); } to { transform: translateX(10px); } }
+
+    .widget {
+      width: 95%; max-width: 420px; height: 85vh; max-height: 620px;
+      background: var(--card-bg); border-radius: var(--radius);
+      box-shadow: var(--shadow-lg); position: relative;
+      display: flex; flex-direction: column; overflow: hidden;
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    }
+
+    .header {
+      padding: 14px 18px 10px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid rgba(0,0,0,0.06); flex-shrink: 0;
+    }
+    .header-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .header-actions { display: flex; gap: 8px; }
+    .actionBtn {
+      width: 32px; height: 32px; border-radius: 8px; border: none;
+      background: rgba(0,0,0,0.05); color: var(--text-secondary); cursor: pointer;
+      font-size: 14px; transition: all var(--transition);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .actionBtn:hover { background: rgba(0,0,0,0.1); color: var(--text-primary); transform: scale(1.05); }
+
+    .content {
+      flex: 1; min-height: 0; overflow-y: auto; padding: 14px 18px 10px;
+      display: flex; flex-direction: column; gap: 12px;
+      scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent;
+      -webkit-overflow-scrolling: touch;
+    }
+    .content::-webkit-scrollbar { width: 6px; }
+    .content::-webkit-scrollbar-track { background: transparent; }
+    .content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+    .content::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.35); }
+
+    .today-block {
+      background: rgba(0,0,0,0.04); border-radius: var(--radius-sm); padding: 16px;
+      text-align: center; transition: background var(--transition); flex-shrink: 0;
+    }
+    .today-block:hover { background: rgba(0,0,0,0.06); }
+    .today-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+    .today-date { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+    .payment-row { font-size: 15px; font-weight: 500; line-height: 1.4; color: var(--text-primary); padding: 4px 0; }
+    .payment-row + .payment-row { border-top: 1px dashed rgba(0,0,0,0.08); padding-top: 6px; margin-top: 2px; }
+
+    .empty-state { text-align: center; color: var(--text-tertiary); font-size: 13px; font-style: italic; padding: 20px 0; }
+
+    .upcoming-block { flex-shrink: 0; }
+    .upcoming-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+    .upcoming-item {
+      display: flex; justify-content: space-between; align-items: baseline;
+      font-size: 14px; color: var(--text-secondary); padding: 6px 0; border-bottom: 1px dashed rgba(0,0,0,0.06);
+    }
+    .upcoming-item:last-child { border-bottom: none; }
+    .upcoming-date { font-weight: 500; color: var(--text-primary); min-width: 80px; }
+    .upcoming-title { flex: 1; margin: 0 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .upcoming-amount { font-weight: 500; color: var(--text-primary); }
+
+    .controls {
+      height: auto; min-height: 100px;
+      flex-direction: column; gap: 10px;
+      background: rgba(255,255,255,0.6); border-top: 1px solid rgba(0,0,0,0.06);
+      padding: 12px 18px 14px; flex-shrink: 0;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+    .controls-btns {
+      display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%;
+    }
+    .total-row {
+      font-size: 13px; color: var(--text-secondary); text-align: center;
+      background: rgba(0,0,0,0.04); border-radius: 10px; padding: 6px 10px; width: 100%;
+      user-select: none;
+    }
+    .total-sum { font-weight: 600; color: var(--text-primary); }
+
+    .controlBtn {
+      width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.12); background: #fff;
+      color: var(--text-primary); font-size: 22px; cursor: pointer; transition: all var(--transition);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .controlBtn:hover { transform: scale(1.08); border-color: rgba(0,0,0,0.25); }
+    .controlBtn:active { transform: scale(0.95); }
+    .controlBtn.active { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
+    .scrollBtn {
+      width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.08); background: rgba(0,0,0,0.03);
+      color: var(--text-secondary); cursor: pointer; transition: all var(--transition);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .scrollBtn:hover { background: rgba(0,0,0,0.08); color: var(--text-primary); }
+    .scrollBtn svg { width: 20px; height: 20px; }
+
+    .overlay {
+      position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      opacity: 0; pointer-events: none; transition: opacity var(--transition), transform var(--transition); transform: scale(0.97);
+    }
+    .overlay.visible { opacity: 1; pointer-events: auto; transform: scale(1); }
+
+    .form {
+      width: 88%; max-height: 80%; background: #fff; border-radius: var(--radius-sm); padding: 18px;
+      box-shadow: var(--shadow-lg); display: flex; flex-direction: column; gap: 10px;
+    }
+    .formTitle { font-size: 15px; font-weight: 600; text-align: center; margin-bottom: 2px; }
+    input {
+      width: 100%; height: 42px; padding: 0 14px; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px;
+      font-size: 14px; outline: none; background: rgba(0,0,0,0.03); color: var(--text-primary); transition: all var(--transition);
+    }
+    input:focus { border-color: rgba(0,0,0,0.3); box-shadow: 0 0 0 3px rgba(0,0,0,0.04); background: #fff; }
+    .formError { min-height: 16px; color: #ff3b30; font-size: 12px; text-align: center; }
+    .formActions { display: flex; gap: 8px; }
+    .formBtn {
+      flex: 1; height: 40px; border-radius: 10px; border: none; font-size: 14px; font-weight: 500; cursor: pointer; transition: all var(--transition);
+    }
+    .formBtn.primary { background: var(--text-primary); color: #fff; }
+    .formBtn.primary:hover { opacity: 0.9; }
+    .formBtn.secondary { background: rgba(0,0,0,0.05); color: var(--text-primary); border: 1px solid rgba(0,0,0,0.08); }
+    .formBtn.secondary:hover { background: rgba(0,0,0,0.08); }
+
+    .delete-mode { display: flex; flex-direction: column; gap: 8px; }
+    .delete-title { font-size: 13px; font-weight: 600; text-align: center; color: #ff3b30; }
+    .delete-row {
+      display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: rgba(255,59,48,0.06); border-radius: 10px; transition: background var(--transition);
+    }
+    .delete-row:hover { background: rgba(255,59,48,0.12); }
+    .delete-text { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .delete-btn {
+      width: 26px; height: 26px; border-radius: 50%; border: none; background: #ff3b30; color: #fff; font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: transform var(--transition);
+    }
+    .delete-btn:active { transform: scale(0.85); }
+
+    @media (max-width: 480px) {
+      .widget { width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="widget">
+    <div class="header">
+      <div class="header-title">💳 Платежи</div>
+      <div class="header-actions">
+        <button class="actionBtn" id="exportBtn" title="Скачать бэкап">💾</button>
+        <button class="actionBtn" id="importBtn" title="Загрузить бэкап">📥</button>
+      </div>
+    </div>
+
+    <main id="content" class="content"></main>
+
+    <footer class="controls">
+      <div id="totalBar" class="total-row">
+        <span style="font-weight:600">Итого</span> — <span id="totalSum" class="total-sum">0к ₽</span>
+      </div>
+      <div class="controls-btns">
+        <button id="addBtn" class="controlBtn" title="Добавить">+</button>
+        <button id="scrollBtn" class="scrollBtn" title="Прокрутить вниз">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <button id="deleteBtn" class="controlBtn" title="Удалить">−</button>
+      </div>
+    </footer>
+
+    <div id="formOverlay" class="overlay">
+      <form id="paymentForm" class="form">
+        <div class="formTitle">Новый платеж</div>
+        <input id="dayInput" type="number" min="1" max="31" placeholder="День (1–31)" required />
+        <input id="titleInput" type="text" maxlength="60" placeholder="Назначение" required />
+        <input id="amountInput" type="text" maxlength="10" placeholder="Сумма (только цифры, напр. 35)" required />
+        <div id="formError" class="formError"></div>
+        <div class="formActions">
+          <button type="button" id="cancelBtn" class="formBtn secondary">Отмена</button>
+          <button type="submit" class="formBtn primary">Добавить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <input type="file" id="importFile" accept=".json" style="display:none" />
+
+  <script>
+    const STORAGE_KEY = 'paymentWidget_v8';
+    const NOTIFY_KEY = 'paymentWidget_notifications_v1';
+    const $ = id => document.getElementById(id);
+    let payments = [], deleteMode = false;
+    let notifiedToday = new Set();
+
+    function esc(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function formatAmount(val) {
+      const clean = String(val).replace(/[^\d]/g, '');
+      return clean ? `${clean}к ₽` : '';
+    }
+
+    // === УВЕДОМЛЕНИЯ ===
+    async function requestNotificationPermission() {
+      if (!('Notification' in window)) return false;
+      if (Notification.permission === 'granted') return true;
+      if (Notification.permission !== 'denied') {
+        await Notification.requestPermission();
+      }
+      return Notification.permission === 'granted';
+    }
+
+    function getNotifyKey(paymentId, type) {
+      const today = new Date().toDateString();
+      return `${paymentId}-${type}-${today}`;
+    }
+
+    function sendNotification(title, body, paymentId, type) {
+      const key = getNotifyKey(paymentId, type);
+      if (notifiedToday.has(key)) return;
+
+      new Notification(title, {
+        body,
+        icon: '💳',
+        badge: '💳',
+        tag: key,
+        requireInteraction: false
+      });
+
+      notifiedToday.add(key);
+      const stored = JSON.parse(localStorage.getItem(NOTIFY_KEY) || '[]');
+      stored.push(key);
+      localStorage.setItem(NOTIFY_KEY, JSON.stringify(stored.slice(-50)));
+    }
+
+    function checkAndNotify() {
+      const now = new Date();
+      const hour = now.getHours();
+      if (hour < 10) return;
+
+      const today = new Date(); today.setHours(0,0,0,0);
+      const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+
+      payments.forEach(p => {
+        const nextDate = getNextDate(Number(p.day), true);
+        if (!nextDate) return;
+
+        const isToday = nextDate.getTime() === today.getTime();
+        const isTomorrow = nextDate.getTime() === tomorrow.getTime();
+
+        if (isToday) {
+          sendNotification(
+            '💳 Сегодня платеж',
+            `${p.title} — ${p.amount}`,
+            p.id,
+            'today'
+          );
+        } else if (isTomorrow) {
+          sendNotification(
+            '⏰ Завтра платеж',
+            `${p.title} — ${p.amount}`,
+            p.id,
+            'tomorrow'
+          );
+        }
+      });
+    }
+
+    function updateTotal() {
+      let total = 0;
+      payments.forEach(p => {
+        const match = String(p.amount).match(/\d+/);
+        if (match) total += parseInt(match[0], 10);
+      });
+      $('totalSum').textContent = `${total}к ₽`;
+    }
+
+    function init() {
+      load(); bindEvents(); render();
+      requestNotificationPermission().then(() => {
+        checkAndNotify();
+        setInterval(checkAndNotify, 60 * 60 * 1000);
+      });
+      setInterval(render, 60 * 1000);
+    }
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        payments = raw ? JSON.parse(raw) : [];
+        const stored = JSON.parse(localStorage.getItem(NOTIFY_KEY) || '[]');
+        notifiedToday = new Set(stored);
+      } catch { payments = []; notifiedToday = new Set(); }
+    }
+
+    function save() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(payments)); }
+      catch { alert('⚠️ Не удалось сохранить. Экспортируйте данные через 💾, чтобы не потерять.'); }
+    }
+
+    function getNextDate(day, includeToday) {
+      const today = new Date(); today.setHours(0,0,0,0);
+      for (let offset = 0; offset < 36; offset++) {
+        const d = new Date(today.getFullYear(), today.getMonth() + offset, day);
+        if (d.getDate() !== day) continue;
+        d.setHours(0,0,0,0);
+        if ((includeToday ? d >= today : d > today)) return d;
+      }
+      return null;
+    }
+
+    function formatDate(d) {
+      return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
+    }
+
+    function isToday(day) { return Number(day) === new Date().getDate(); }
+
+    function render() {
+      $('deleteBtn').classList.toggle('active', deleteMode);
+      const content = $('content'); content.innerHTML = '';
+
+      if (deleteMode) { renderDeleteMode(content); return; }
+      renderNormalMode(content);
+      
+      updateTotal();
+    }
+
+    function renderNormalMode(content) {
+      const todayPayments = payments.filter(p => isToday(p.day)).sort((a,b) => a.title.localeCompare(b.title, 'ru'));
+      const upcoming = payments
+        .map(p => ({ ...p, next: getNextDate(Number(p.day), false) }))
+        .filter(p => p.next)
+        .sort((a,b) => a.next - b.next || a.title.localeCompare(b.title, 'ru'));
+
+      const todayBlock = document.createElement('div'); todayBlock.className = 'today-block';
+      if (todayPayments.length) {
+        todayBlock.innerHTML = `
+          <div class="today-label">СЕГОДНЯ</div>
+          <div class="today-date">${formatDate(new Date())}</div>
+          ${todayPayments.map(p => `<div class="payment-row">${esc(p.title)} · ${esc(p.amount)}</div>`).join('')}
+        `;
+      } else {
+        todayBlock.classList.add('empty-state');
+        todayBlock.textContent = 'Платежей на сегодня нет';
+      }
+      content.appendChild(todayBlock);
+
+      const upcomingBlock = document.createElement('div'); upcomingBlock.className = 'upcoming-block';
+      upcomingBlock.innerHTML = `<div class="upcoming-label">БЛИЖАЙШИЕ ПЛАТЕЖИ</div>`;
+      if (!upcoming.length) {
+        upcomingBlock.innerHTML += `<div class="empty-state" style="padding:8px 0;">Нет запланированных</div>`;
+      } else {
+        upcoming.forEach(p => {
+          upcomingBlock.innerHTML += `
+            <div class="upcoming-item">
+              <span class="upcoming-date">${formatDate(p.next)}</span>
+              <span class="upcoming-title">${esc(p.title)}</span>
+              <span class="upcoming-amount">${esc(p.amount)}</span>
+            </div>`;
+        });
+      }
+      content.appendChild(upcomingBlock);
+    }
+
+    function renderDeleteMode(content) {
+      const panel = document.createElement('div'); panel.className = 'delete-mode';
+      panel.innerHTML = `<div class="delete-title">Нажмите × для удаления</div>`;
+      const sorted = payments
+        .map(p => ({ ...p, next: getNextDate(Number(p.day), true) }))
+        .filter(p => p.next).sort((a,b) => a.next - b.next || a.title.localeCompare(b.title, 'ru'));
+      if (!sorted.length) {
+        panel.innerHTML += `<div class="empty-state">Список пуст</div>`;
+      } else {
+        sorted.forEach(p => {
+          const row = document.createElement('div'); row.className = 'delete-row';
+          row.innerHTML = `<div class="delete-text">${formatDate(p.next)} · ${esc(p.title)} · ${esc(p.amount)}</div><button class="delete-btn" data-id="${p.id}">×</button>`;
+          row.querySelector('.delete-btn').onclick = () => { payments = payments.filter(x => x.id !== p.id); save(); render(); };
+          panel.appendChild(row);
+        });
+      }
+      content.appendChild(panel);
+    }
+
+    function bindEvents() {
+      $('addBtn').onclick = () => { $('formOverlay').classList.add('visible'); setTimeout(() => $('dayInput').focus(), 50); };
+      $('deleteBtn').onclick = () => { deleteMode = !deleteMode; render(); };
+      $('cancelBtn').onclick = closeForm;
+      $('paymentForm').onsubmit = e => { e.preventDefault(); addPayment(); };
+      
+      $('scrollBtn').onclick = () => {
+        const c = $('content');
+        const row = c.querySelector('.upcoming-item, .delete-row, .payment-row');
+        const step = row ? row.getBoundingClientRect().height + 8 : 48;
+        const max = c.scrollHeight - c.clientHeight;
+        if (max <= 0) return;
+        if (c.scrollTop >= max - 5) c.scrollTo({ top: 0, behavior: 'smooth' });
+        else c.scrollBy({ top: step, behavior: 'smooth' });
+      };
+
+      document.addEventListener('keydown', e => { 
+        if (e.key === 'Escape' && $('formOverlay').classList.contains('visible')) closeForm();
+      });
+
+      $('exportBtn').onclick = () => {
+        const blob = new Blob([JSON.stringify(payments, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = `payments-${new Date().toISOString().slice(0,10)}.json`; a.click();
+      };
+
+      $('importBtn').onclick = () => $('importFile').click();
+      $('importFile').onchange = e => {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (Array.isArray(data) && data.length && data[0].id) {
+              if (confirm('📥 Заменить текущие платежи данными из файла?')) {
+                payments = data; save(); render();
+              }
+            } else {
+              alert('❌ Файл не содержит валидный список платежей.');
+            }
+          } catch { alert('❌ Ошибка чтения файла. Проверьте формат.'); }
+          e.target.value = '';
+        };
+        reader.readAsText(file);
+      };
+    }
+
+    function closeForm() { $('formOverlay').classList.remove('visible'); $('formError').textContent = ''; $('paymentForm').reset(); }
+
+    function addPayment() {
+      const day = parseInt($('dayInput').value, 10);
+      const title = $('titleInput').value.trim();
+      const rawAmount = $('amountInput').value.trim();
+      const err = $('formError'); err.textContent = '';
+      if (!Number.isInteger(day) || day < 1 || day > 31) { err.textContent = 'День: 1–31'; return; }
+      if (!title) { err.textContent = 'Введите назначение'; return; }
+      if (!rawAmount) { err.textContent = 'Введите сумму'; return; }
+      
+      const amount = formatAmount(rawAmount);
+      payments.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,7), day, title, amount });
+      save(); closeForm(); render();
+    }
+
+    init();
+  </script>
+</body>
+</html>
