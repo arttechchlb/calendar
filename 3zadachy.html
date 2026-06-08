@@ -1,0 +1,682 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+<title>Задачи</title>
+<style>
+:root{
+  --bg:#111318;--bg2:#171a21;--card:#20242d;--card2:#262b35;--line:rgba(255,255,255,.08);
+  --text:#f2f4f8;--muted:#9aa3b2;--soft:#697386;--blue:#7aa7ff;--red:#ff6b6b;--green:#70d69d;
+  --shadow:0 18px 55px rgba(0,0,0,.38);--r:22px;--rs:14px;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;min-height:100vh;font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden}
+body{display:flex;align-items:center;justify-content:center}
+body:before{content:"";position:fixed;inset:0;background:
+radial-gradient(circle at 20% 10%,rgba(122,167,255,.16),transparent 30%),
+radial-gradient(circle at 85% 20%,rgba(112,214,157,.08),transparent 32%),
+linear-gradient(135deg,#0f1116,#1a1d25 55%,#101217);z-index:-1}
+button,input,textarea,select{font-family:inherit}
+.widget{width:96%;max-width:1400px;height:90vh;max-height:820px;background:rgba(25,28,36,.88);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.header{height:58px;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);flex-shrink:0}
+.header-title{font-size:16px;font-weight:650;letter-spacing:.2px}
+.header-actions{display:flex;gap:8px}
+.actionBtn{width:32px;height:32px;border:none;border-radius:10px;background:rgba(255,255,255,.06);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.actionBtn:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.content{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:14px 16px 12px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.22) transparent;-webkit-overflow-scrolling:touch}
+.content::-webkit-scrollbar{width:6px}.content::-webkit-scrollbar-track{background:transparent}.content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22);border-radius:8px}
+
+.column{display:flex;flex-direction:column;gap:14px;min-width:0}
+.column-header{text-align:center;padding:10px 8px;border-radius:var(--rs);background:linear-gradient(135deg,rgba(122,167,255,.08),rgba(255,255,255,.02));border:1px solid var(--line);flex-shrink:0;transition:.2s}
+.column-title{font-size:13px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase}
+.column-count{font-size:11px;color:var(--muted);margin-top:3px}
+.column[data-owner="oleg"] .column-title{color:#9cc0ff}
+.column[data-owner="natasha"] .column-title{color:#ff9ec7}
+.column[data-owner="tanya"] .column-title{color:#a9e5c4}
+.column[data-owner="oleg"] .column-header{background:linear-gradient(135deg,rgba(122,167,255,.12),rgba(255,255,255,.02))}
+.column[data-owner="natasha"] .column-header{background:linear-gradient(135deg,rgba(255,120,180,.12),rgba(255,255,255,.02))}
+.column[data-owner="tanya"] .column-header{background:linear-gradient(135deg,rgba(112,214,157,.12),rgba(255,255,255,.02))}
+
+/* режим удаления — лёгкая красная подсветка заголовков */
+.content.delete-mode .column-header{border-color:rgba(255,107,107,.35);box-shadow:0 0 0 1px rgba(255,107,107,.08) inset}
+
+.block{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:var(--rs);padding:12px;flex-shrink:0}
+.block-title{font-size:11px;font-weight:750;letter-spacing:.7px;text-transform:uppercase;color:var(--soft);margin-bottom:9px}
+.empty{font-size:13px;color:var(--soft);text-align:center;padding:14px 5px;font-style:italic}
+.task-row{display:flex;align-items:center;gap:10px;padding:10px 9px;border-radius:12px;cursor:pointer;border:1px solid transparent;transition:background .18s,border-color .18s,opacity .2s,transform .2s;background:rgba(255,255,255,.025);margin-top:7px}
+.task-row:first-of-type{margin-top:0}
+.task-row:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.08)}
+.task-row.today{border-left:3px solid var(--blue)}
+.task-row.overdue{border-left:3px solid var(--red)}
+.task-main{flex:1;min-width:0}
+.task-line{font-size:14px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta{color:var(--blue);font-weight:650}
+.sep{color:var(--soft);margin:0 6px}
+.title{color:var(--text)}
+.rank{width:36px;height:30px;border-radius:10px;background:rgba(122,167,255,.12);color:#cfe0ff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:750;flex-shrink:0}
+.overdue .meta{color:var(--red)}.overdue .rank{background:rgba(255,107,107,.13);color:#ffc6c6}
+
+/* --- крестик удаления --- */
+.delete-x{width:32px;height:32px;border-radius:50%;border:none;background:var(--red);color:white;font-size:20px;font-weight:750;line-height:1;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform .18s,filter .18s,box-shadow .18s;box-shadow:0 4px 14px rgba(255,107,107,.35)}
+.delete-x:hover{transform:scale(1.1);filter:brightness(1.12)}
+.delete-x:active{transform:scale(.92)}
+
+/* визуальная подсказка режима удаления */
+.content.delete-mode .task-row{cursor:default;background:rgba(255,107,107,.04)}
+.content.delete-mode .task-row:hover{background:rgba(255,107,107,.09);border-color:rgba(255,107,107,.18)}
+.task-row.deleting{opacity:0;transform:translateX(24px);pointer-events:none}
+
+.controls{min-height:96px;padding:12px 18px 14px;background:rgba(17,19,24,.78);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.total-row{text-align:center;font-size:13px;color:var(--muted);background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:12px;padding:7px 10px}
+.total-row b{color:var(--text)}
+.controls-btns{display:flex;align-items:center;justify-content:center;gap:13px}
+.controlBtn,.scrollBtn{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.07);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.18s}
+.controlBtn{font-size:23px}.scrollBtn svg{width:20px;height:20px}
+.controlBtn:hover,.scrollBtn:hover{transform:scale(1.06);background:rgba(255,255,255,.11)}
+.controlBtn:active,.scrollBtn:active{transform:scale(.95)}
+.controlBtn.active{background:var(--red);border-color:var(--red);color:white}
+.overlay{position:absolute;inset:0;z-index:10;background:rgba(9,10,13,.68);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transform:scale(.985);transition:.2s}
+.overlay.visible{opacity:1;pointer-events:auto;transform:scale(1)}
+.form,.details,.importBox{width:88%;max-width:520px;max-height:86%;overflow-y:auto;background:#1d212a;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:17px;display:flex;flex-direction:column;gap:10px}
+.formTitle,.detailTitle,.importTitle{font-size:16px;font-weight:750;text-align:center;line-height:1.3}
+input,textarea,select{width:100%;border:1px solid var(--line);background:rgba(255,255,255,.055);color:var(--text);border-radius:12px;outline:none;font-size:14px}
+input{height:42px;padding:0 13px}
+textarea{min-height:92px;resize:vertical;padding:12px 13px;line-height:1.35}
+select{height:42px;padding:0 10px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%239aa3b2' d='M6 8L0 0h12z'/></svg>");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
+input:focus,textarea:focus,select:focus{border-color:rgba(122,167,255,.55);box-shadow:0 0 0 3px rgba(122,167,255,.1)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+.owner-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.owner-label{display:flex;align-items:center;justify-content:center;gap:6px;height:40px;border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:12px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);transition:.18s;user-select:none}
+.owner-label:hover{background:rgba(255,255,255,.08)}
+.owner-label input{display:none}
+.owner-label[data-v="oleg"].checked{background:rgba(122,167,255,.18);border-color:rgba(122,167,255,.5);color:#cfe0ff}
+.owner-label[data-v="natasha"].checked{background:rgba(255,120,180,.18);border-color:rgba(255,120,180,.5);color:#ffd2e4}
+.owner-label[data-v="tanya"].checked{background:rgba(112,214,157,.18);border-color:rgba(112,214,157,.5);color:#d3f3e1}
+.owner-label[data-v="auto"].checked{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:var(--text)}
+.owner-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.owner-dot.oleg{background:#7aa7ff}
+.owner-dot.natasha{background:#ff78b4}
+.owner-dot.tanya{background:#70d69d}
+.owner-dot.auto{background:var(--soft)}
+
+.formError{min-height:16px;color:var(--red);font-size:12px;text-align:center}
+.formActions,.detailActions,.importActions{display:flex;gap:8px}
+.formBtn{flex:1;height:40px;border:none;border-radius:12px;font-size:14px;font-weight:650;cursor:pointer}
+.primary{background:var(--blue);color:#10131a}.secondary{background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--line)}.danger{background:var(--red);color:white}
+.primary:hover{filter:brightness(1.06)}.secondary:hover{background:rgba(255,255,255,.1)}.danger:hover{filter:brightness(1.08)}
+.detailMeta{font-size:13px;color:var(--muted);text-align:center}
+.detailOwner{margin:2px auto 0;width:max-content;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:750;letter-spacing:.8px;text-transform:uppercase}
+.detailOwner.oleg{background:rgba(122,167,255,.16);color:#cfe0ff}
+.detailOwner.natasha{background:rgba(255,120,180,.16);color:#ffd2e4}
+.detailOwner.tanya{background:rgba(112,214,157,.16);color:#d3f3e1}
+.detailRank{margin:2px auto 4px;width:max-content;min-width:60px;text-align:center;padding:7px 12px;border-radius:999px;background:rgba(122,167,255,.12);color:#cfe0ff;font-size:13px;font-weight:750}
+.detailDesc{white-space:pre-wrap;line-height:1.45;font-size:14px;color:#d9dee8;background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:80px}
+
+.importSection{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:12px}
+.importSectionTitle{font-size:11px;font-weight:750;letter-spacing:.7px;text-transform:uppercase;color:var(--soft);margin-bottom:9px}
+.importInfo{font-size:13px;color:var(--muted);text-align:center;padding:6px 0}
+.importInfo b{color:var(--text)}
+.importWarn{font-size:12px;color:var(--red);background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.15);border-radius:10px;padding:8px 10px;text-align:center;line-height:1.4}
+
+@media(max-width:900px){
+  .content{grid-template-columns:repeat(3,minmax(300px,1fr));overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory}
+  .column{scroll-snap-align:start;overflow-y:auto}
+}
+@media(max-width:480px){.widget{width:100%;height:100vh;max-height:100vh;border-radius:0}.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="widget">
+  <div class="header">
+    <div class="header-title">Задачи</div>
+    <div class="header-actions">
+      <button class="actionBtn" id="exportBtn" title="Скачать бэкап">💾</button>
+      <button class="actionBtn" id="importBtn" title="Загрузить бэкап">📥</button>
+    </div>
+  </div>
+
+  <main id="content" class="content"></main>
+
+  <footer class="controls">
+    <div class="total-row">Всего задач — <b id="taskCount">0</b></div>
+    <div class="controls-btns">
+      <button id="addBtn" class="controlBtn" title="Добавить">+</button>
+      <button id="scrollBtn" class="scrollBtn" title="Прокрутить вниз">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+      <button id="deleteBtn" class="controlBtn" title="Удалить">−</button>
+    </div>
+  </footer>
+
+  <div id="formOverlay" class="overlay">
+    <form id="taskForm" class="form">
+      <div id="formTitle" class="formTitle">Новая задача</div>
+      <div class="owner-row" id="ownerRow">
+        <label class="owner-label" data-v="oleg"><input type="radio" name="owner" value="oleg" checked><span class="owner-dot oleg"></span>Олег</label>
+        <label class="owner-label" data-v="natasha"><input type="radio" name="owner" value="natasha"><span class="owner-dot natasha"></span>Наташа</label>
+        <label class="owner-label" data-v="tanya"><input type="radio" name="owner" value="tanya"><span class="owner-dot tanya"></span>Таня</label>
+      </div>
+      <input id="titleInput" type="text" maxlength="90" placeholder="Задача" required />
+      <div class="row2">
+        <input id="dateInput" type="date" />
+        <input id="timeInput" type="time" />
+      </div>
+      <input id="rankInput" type="number" min="1" max="100" placeholder="Рейтинг 1–100" required />
+      <textarea id="descInput" maxlength="2500" placeholder="Описание"></textarea>
+      <div id="formError" class="formError"></div>
+      <div class="formActions">
+        <button type="button" id="cancelBtn" class="formBtn secondary">Отмена</button>
+        <button type="submit" class="formBtn primary">Сохранить</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="detailOverlay" class="overlay">
+    <div class="details">
+      <div id="detailOwner" class="detailOwner"></div>
+      <div id="detailTitle" class="detailTitle"></div>
+      <div id="detailMeta" class="detailMeta"></div>
+      <div id="detailRank" class="detailRank"></div>
+      <div id="detailDesc" class="detailDesc"></div>
+      <div class="detailActions">
+        <button id="closeDetailBtn" class="formBtn secondary">Закрыть</button>
+        <button id="editDetailBtn" class="formBtn primary">Редактировать</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="importOverlay" class="overlay">
+    <div class="importBox">
+      <div class="importTitle">Загрузка задач из файла</div>
+      <div class="importInfo">В файле найдено задач: <b id="importCount">0</b></div>
+
+      <div class="importSection">
+        <div class="importSectionTitle">Кому принадлежат задачи?</div>
+        <div class="owner-row" id="importOwnerRow">
+          <label class="owner-label" data-v="oleg"><input type="radio" name="importOwner" value="oleg"><span class="owner-dot oleg"></span>Олег</label>
+          <label class="owner-label" data-v="natasha"><input type="radio" name="importOwner" value="natasha"><span class="owner-dot natasha"></span>Наташа</label>
+          <label class="owner-label" data-v="tanya"><input type="radio" name="importOwner" value="tanya"><span class="owner-dot tanya"></span>Таня</label>
+          <label class="owner-label" data-v="auto" style="grid-column:1/-1"><input type="radio" name="importOwner" value="auto" checked><span class="owner-dot auto"></span>Как в файле (если owner не указан — к Олегу)</label>
+        </div>
+      </div>
+
+      <div class="importSection">
+        <div class="importSectionTitle">Что сделать с текущими задачами?</div>
+        <div class="row2" style="grid-template-columns:1fr 1fr">
+          <label class="owner-label" data-mode="merge" style="height:44px"><input type="radio" name="importMode" value="merge" checked>➕ Объединить</label>
+          <label class="owner-label" data-mode="replace" style="height:44px"><input type="radio" name="importMode" value="replace">🗑 Заменить все</label>
+        </div>
+      </div>
+
+      <div id="importWarn" class="importWarn" style="display:none">
+        ⚠️ Режим «Заменить все» удалит текущие задачи у всех владельцев!
+      </div>
+
+      <div class="formError" id="importError"></div>
+
+      <div class="importActions">
+        <button type="button" id="importCancelBtn" class="formBtn secondary">Отмена</button>
+        <button type="button" id="importConfirmBtn" class="formBtn primary">Загрузить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="importFile" accept=".json" style="display:none" />
+
+<script>
+const STORAGE_KEY='taskWidget_v1';
+const NOTIFY_KEY='taskWidget_notifications_v1';
+const $=id=>document.getElementById(id);
+const OWNERS=[
+  {id:'oleg',    name:'Задачи Олег',    short:'Олег'},
+  {id:'natasha', name:'Задачи Наташа',  short:'Наташа'},
+  {id:'tanya',   name:'Задачи Таня',    short:'Таня'}
+];
+const validOwner=v=>OWNERS.some(o=>o.id===v)?v:'oleg';
+
+let tasks=[];
+let deleteMode=false;
+let editId=null;
+let editRankShown=null;
+let openedTaskId=null;
+let notified=new Set();
+let importPending=null;
+
+function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+function clamp(n,min,max){n=parseInt(n,10);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):min}
+function pad(n){return String(n).padStart(2,'0')}
+function today(){const d=new Date();d.setHours(0,0,0,0);return d}
+function iso(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
+function todayISO(){return iso(today())}
+function parseDate(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(String(s)))return null;const [y,m,d]=s.split('-').map(Number);const x=new Date(y,m-1,d);x.setHours(0,0,0,0);return iso(x)===s?x:null}
+function validDate(s){return !!parseDate(s)}
+function validTime(s){return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(s))}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);x.setHours(0,0,0,0);return x}
+function daysBetween(s,end){const d=parseDate(s);if(!d)return 0;return Math.max(0,Math.floor((end-d)/86400000))}
+function effectiveRank(t){return Math.max(1,clamp(t.rankBase,1,100)-daysBetween(t.rankSetAt,today()))}
+function timeMin(t){return validTime(t.time)?Number(t.time.slice(0,2))*60+Number(t.time.slice(3,5)):9999}
+
+function formatDate(s){
+  const d=parseDate(s); if(!d)return '';
+  const opts={day:'numeric',month:'short'};
+  if(d.getFullYear()!==today().getFullYear())opts.year='numeric';
+  return d.toLocaleDateString('ru-RU',opts).replace('.','');
+}
+function meta(t){
+  const d=t.date?formatDate(t.date):'';
+  const tm=validTime(t.time)?t.time:'';
+  if(d&&tm)return `${d}, ${tm}`;
+  return d||tm||'';
+}
+function ownerShort(t){return (OWNERS.find(o=>o.id===t.owner)||OWNERS[0]).short}
+function statusClass(t){
+  if(t.date===todayISO())return 'today';
+  if(t.date && t.date<todayISO())return 'overdue';
+  return '';
+}
+
+function normalizeTask(x){
+  const title=String(x.title??x.task??'').trim();
+  if(!title)return null;
+  const date=validDate(x.date??x.deadlineDate)?String(x.date??x.deadlineDate):'';
+  const time=validTime(x.time??x.deadlineTime)?String(x.time??x.deadlineTime):'';
+  const createdAt=x.createdAt||new Date().toISOString();
+  let rankSetAt=validDate(x.rankSetAt)?x.rankSetAt:'';
+  if(!rankSetAt && typeof createdAt==='string' && validDate(createdAt.slice(0,10)))rankSetAt=createdAt.slice(0,10);
+  if(!rankSetAt)rankSetAt=todayISO();
+  return {
+    id:String(x.id||Date.now().toString(36)+Math.random().toString(36).slice(2,8)),
+    title:title.slice(0,90),
+    date,
+    time,
+    owner:validOwner(x.owner),
+    rankBase:clamp(x.rankBase??x.rating??x.rank,1,100),
+    rankSetAt,
+    desc:String(x.desc??x.description??'').slice(0,2500),
+    createdAt
+  };
+}
+
+function load(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    const arr=raw?JSON.parse(raw):[];
+    tasks=Array.isArray(arr)?arr.map(normalizeTask).filter(Boolean):[];
+    notified=new Set(JSON.parse(localStorage.getItem(NOTIFY_KEY)||'[]'));
+  }catch{tasks=[];notified=new Set()}
+}
+function save(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(tasks))}
+  catch{alert('Не удалось сохранить данные. Сделайте экспорт через 💾.')}
+}
+function saveNotified(){
+  try{localStorage.setItem(NOTIFY_KEY,JSON.stringify([...notified].slice(-120)))}catch{}
+}
+
+function sortToday(a,b){return timeMin(a)-timeMin(b)||effectiveRank(a)-effectiveRank(b)||a.title.localeCompare(b.title,'ru')}
+function sortGeneral(a,b){
+  const ca=a.date?(a.date<todayISO()?0:1):2;
+  const cb=b.date?(b.date<todayISO()?0:1):2;
+  if(ca!==cb)return ca-cb;
+  if(ca===2)return effectiveRank(a)-effectiveRank(b)||a.title.localeCompare(b.title,'ru');
+  return a.date.localeCompare(b.date)||timeMin(a)-timeMin(b)||effectiveRank(a)-effectiveRank(b)||a.title.localeCompare(b.title,'ru');
+}
+
+function updateCount(){$('taskCount').textContent=tasks.length}
+
+// --- УДАЛЕНИЕ ЗАДАЧИ (с анимацией) ---
+function removeTaskAnimated(id, rowEl){
+  rowEl.classList.add('deleting');
+  setTimeout(()=>{
+    tasks=tasks.filter(x=>x.id!==id);
+    save();
+    render();
+  },180);
+}
+
+function makeTaskRow(t){
+  const div=document.createElement('div');
+  div.className=`task-row ${statusClass(t)}`;
+  const m=meta(t);
+
+  if(deleteMode){
+    // РЕЖИМ УДАЛЕНИЯ: справа крестик, клик по строке ничего не делает
+    div.innerHTML=`
+      <div class="task-main">
+        <div class="task-line">
+          ${m?`<span class="meta">${esc(m)}</span><span class="sep">—</span>`:''}
+          <span class="title">${esc(t.title)}</span>
+        </div>
+      </div>
+      <button class="delete-x" aria-label="Удалить задачу" title="Удалить">×</button>`;
+    div.querySelector('.delete-x').onclick=(e)=>{
+      e.stopPropagation();
+      removeTaskAnimated(t.id, div);
+    };
+  }else{
+    // ОБЫЧНЫЙ РЕЖИМ: справа рейтинг, клик открывает детали
+    div.innerHTML=`
+      <div class="task-main">
+        <div class="task-line">
+          ${m?`<span class="meta">${esc(m)}</span><span class="sep">—</span>`:''}
+          <span class="title">${esc(t.title)}</span>
+        </div>
+      </div>
+      <div class="rank">${effectiveRank(t)}</div>`;
+    div.onclick=()=>openDetail(t.id);
+  }
+  return div;
+}
+
+function buildColumn(owner){
+  const col=document.createElement('div');
+  col.className='column';
+  col.dataset.owner=owner.id;
+
+  const ownerTasks=tasks.filter(t=>t.owner===owner.id);
+
+  const header=document.createElement('div');
+  header.className='column-header';
+  header.innerHTML=`<div class="column-title">${esc(owner.name)}</div>
+    <div class="column-count">${ownerTasks.length} ${plural(ownerTasks.length,'задача','задачи','задач')}${deleteMode?' • нажмите ×':''}</div>`;
+  col.appendChild(header);
+
+  const todayTasks=ownerTasks.filter(t=>t.date===todayISO()).sort(sortToday);
+  const todayBlock=document.createElement('section');
+  todayBlock.className='block';
+  todayBlock.innerHTML='<div class="block-title">Задачи сегодня</div>';
+  if(todayTasks.length)todayTasks.forEach(t=>todayBlock.appendChild(makeTaskRow(t)));
+  else todayBlock.innerHTML+='<div class="empty">На сегодня задач нет</div>';
+  col.appendChild(todayBlock);
+
+  const list=ownerTasks.filter(t=>t.date!==todayISO()).sort(sortGeneral);
+  const listBlock=document.createElement('section');
+  listBlock.className='block';
+  listBlock.innerHTML='<div class="block-title">Список задач</div>';
+  if(list.length)list.forEach(t=>listBlock.appendChild(makeTaskRow(t)));
+  else listBlock.innerHTML+='<div class="empty">Других задач нет</div>';
+  col.appendChild(listBlock);
+
+  return col;
+}
+
+function plural(n,a,b,c){const m=n%10,h=n%100;if(h>=11&&h<=14)return c;if(m===1)return a;if(m>=2&&m<=4)return b;return c}
+
+function render(){
+  updateCount();
+  $('deleteBtn').classList.toggle('active',deleteMode);
+  const c=$('content');
+  c.classList.toggle('delete-mode',deleteMode);
+  c.innerHTML='';
+  OWNERS.forEach(o=>c.appendChild(buildColumn(o)));
+}
+
+function selectedOwner(){
+  const r=document.querySelector('input[name="owner"]:checked');
+  return r?validOwner(r.value):'oleg';
+}
+function setOwnerRadio(v){
+  document.querySelectorAll('input[name="owner"]').forEach(r=>{r.checked=r.value===v});
+  refreshOwnerLabels('ownerRow','owner');
+}
+function refreshOwnerLabels(rowId){
+  const row=document.getElementById(rowId);
+  if(!row)return;
+  row.querySelectorAll('.owner-label').forEach(l=>{
+    const inp=l.querySelector('input');
+    l.classList.toggle('checked',inp.checked);
+  });
+}
+
+function openForm(id=null){
+  // если включён режим удаления — выключаем, чтобы не путать пользователя
+  if(deleteMode){deleteMode=false}
+  editId=id;
+  $('formError').textContent='';
+  $('taskForm').reset();
+  if(id){
+    const t=tasks.find(x=>x.id===id); if(!t)return;
+    editRankShown=effectiveRank(t);
+    $('formTitle').textContent='Редактировать задачу';
+    setOwnerRadio(t.owner||'oleg');
+    $('titleInput').value=t.title;
+    $('dateInput').value=t.date||'';
+    $('timeInput').value=t.time||'';
+    $('rankInput').value=editRankShown;
+    $('descInput').value=t.desc||'';
+  }else{
+    editRankShown=null;
+    $('formTitle').textContent='Новая задача';
+    setOwnerRadio('oleg');
+    $('rankInput').value=10;
+  }
+  $('formOverlay').classList.add('visible');
+  setTimeout(()=>$('titleInput').focus(),50);
+}
+function closeForm(){
+  $('formOverlay').classList.remove('visible');
+  $('formError').textContent='';
+  $('taskForm').reset();
+  editId=null; editRankShown=null;
+}
+function submitForm(){
+  const owner=selectedOwner();
+  const title=$('titleInput').value.trim();
+  const date=$('dateInput').value;
+  const time=$('timeInput').value;
+  const rank=clamp($('rankInput').value,1,100);
+  const desc=$('descInput').value.trim();
+  const err=$('formError'); err.textContent='';
+
+  if(!title){err.textContent='Введите задачу';return}
+  if(!Number.isInteger(rank)||rank<1||rank>100){err.textContent='Рейтинг должен быть от 1 до 100';return}
+  if(date && !validDate(date)){err.textContent='Некорректная дата';return}
+  if(time && !validTime(time)){err.textContent='Некорректное время';return}
+
+  if(editId){
+    const t=tasks.find(x=>x.id===editId); if(!t)return;
+    t.title=title; t.date=date||''; t.time=time||''; t.desc=desc; t.owner=owner;
+    if(rank!==editRankShown){t.rankBase=rank;t.rankSetAt=todayISO()}
+  }else{
+    tasks.push({
+      id:Date.now().toString(36)+Math.random().toString(36).slice(2,8),
+      title,date:date||'',time:time||'',owner,rankBase:rank,rankSetAt:todayISO(),desc,createdAt:new Date().toISOString()
+    });
+  }
+  save(); closeForm(); render();
+}
+
+function openDetail(id){
+  if(deleteMode)return; // защита от открытия в режиме удаления
+  const t=tasks.find(x=>x.id===id); if(!t)return;
+  openedTaskId=id;
+  const owner=OWNERS.find(o=>o.id===t.owner)||OWNERS[0];
+  const ownerEl=$('detailOwner');
+  ownerEl.textContent=owner.short;
+  ownerEl.className='detailOwner '+owner.id;
+  $('detailTitle').textContent=t.title;
+  $('detailMeta').textContent=meta(t)||'Без даты и времени';
+  $('detailRank').textContent=`Рейтинг ${effectiveRank(t)}`;
+  $('detailDesc').textContent=t.desc||'Описание не добавлено';
+  $('detailOverlay').classList.add('visible');
+}
+function closeDetail(){
+  $('detailOverlay').classList.remove('visible');
+  openedTaskId=null;
+}
+
+/* =============== ИМПОРТ =============== */
+function openImportDialog(data){
+  importPending={data};
+  $('importCount').textContent=data.length;
+  $('importError').textContent='';
+  document.querySelectorAll('input[name="importOwner"]').forEach(r=>{r.checked=r.value==='auto'});
+  document.querySelectorAll('input[name="importMode"]').forEach(r=>{r.checked=r.value==='merge'});
+  refreshOwnerLabels('importOwnerRow');
+  refreshModeLabels();
+  $('importOverlay').classList.add('visible');
+}
+function closeImportDialog(){
+  $('importOverlay').classList.remove('visible');
+  importPending=null;
+}
+function refreshModeLabels(){
+  document.querySelectorAll('[data-mode]').forEach(l=>{
+    const inp=l.querySelector('input');
+    l.classList.toggle('checked',inp.checked);
+  });
+  const mode=document.querySelector('input[name="importMode"]:checked').value;
+  $('importWarn').style.display=(mode==='replace')?'block':'none';
+}
+function confirmImport(){
+  if(!importPending)return;
+  const ownerChoice=document.querySelector('input[name="importOwner"]:checked').value;
+  const mode=document.querySelector('input[name="importMode"]:checked').value;
+  const err=$('importError'); err.textContent=''; err.style.color='';
+
+  let imported=importPending.data;
+  if(ownerChoice!=='auto'){
+    imported=imported.map(t=>({...t, owner:ownerChoice}));
+  }
+
+  if(mode==='replace'){
+    tasks=imported;
+  }else{
+    const existingIds=new Set(tasks.map(t=>t.id));
+    let added=0, skipped=0;
+    imported.forEach(t=>{
+      if(existingIds.has(t.id)){skipped++;return}
+      tasks.push(t); added++;
+    });
+    if(added===0 && skipped>0){
+      err.textContent=`Все ${skipped} задач уже существуют — ничего не добавлено.`;
+      return;
+    }
+    if(skipped>0){
+      err.style.color='var(--muted)';
+      err.textContent=`Добавлено: ${added}. Пропущено дубликатов: ${skipped}.`;
+      setTimeout(()=>{err.style.color='';err.textContent=''},2500);
+    }
+  }
+
+  save(); deleteMode=false; render(); closeImportDialog();
+}
+
+function requestNotifications(){
+  if(!('Notification' in window))return;
+  if(Notification.permission==='default')Notification.requestPermission().then(()=>checkNotify());
+  else checkNotify();
+}
+function notifyKey(t,type){return `${t.id}-${type}-${todayISO()}`}
+function sendNotify(t,type,title){
+  if(!('Notification' in window) || Notification.permission!=='granted')return;
+  const key=notifyKey(t,type);
+  if(notified.has(key))return;
+  try{
+    new Notification(`[${ownerShort(t)}] ${title}`,{body:t.title,tag:key});
+    notified.add(key); saveNotified();
+  }catch{}
+}
+function checkNotify(){
+  const now=new Date();
+  if(now.getHours()<10)return;
+  const td=todayISO();
+  const tm=iso(addDays(today(),1));
+  tasks.forEach(t=>{
+    if(!t.date)return;
+    if(t.date===td)sendNotify(t,'today','Сегодня дедлайн');
+    if(t.date===tm)sendNotify(t,'tomorrow','Завтра дедлайн');
+  });
+}
+
+function bindEvents(){
+  $('addBtn').onclick=()=>openForm();
+  $('deleteBtn').onclick=()=>{deleteMode=!deleteMode;render()};
+  $('cancelBtn').onclick=closeForm;
+  $('taskForm').onsubmit=e=>{e.preventDefault();submitForm()};
+  $('closeDetailBtn').onclick=closeDetail;
+  $('editDetailBtn').onclick=()=>{const id=openedTaskId;closeDetail();openForm(id)};
+
+  document.querySelectorAll('#ownerRow input[name="owner"]').forEach(r=>{
+    r.addEventListener('change',()=>refreshOwnerLabels('ownerRow'));
+  });
+  refreshOwnerLabels('ownerRow');
+
+  document.querySelectorAll('#importOwnerRow input[name="importOwner"]').forEach(r=>{
+    r.addEventListener('change',()=>refreshOwnerLabels('importOwnerRow'));
+  });
+  document.querySelectorAll('input[name="importMode"]').forEach(r=>{
+    r.addEventListener('change',refreshModeLabels);
+  });
+  $('importCancelBtn').onclick=closeImportDialog;
+  $('importConfirmBtn').onclick=confirmImport;
+
+  $('scrollBtn').onclick=()=>{
+    const c=$('content');
+    const narrow=window.matchMedia('(max-width: 900px)').matches;
+    if(narrow){
+      const max=c.scrollWidth-c.clientWidth;
+      if(max<=0)return;
+      if(c.scrollLeft>=max-5)c.scrollTo({left:0,behavior:'smooth'});
+      else c.scrollBy({left:Math.min(c.clientWidth*0.9,320),behavior:'smooth'});
+    }else{
+      const row=c.querySelector('.task-row,.block');
+      const step=row?row.getBoundingClientRect().height+8:52;
+      const max=c.scrollHeight-c.clientHeight;
+      if(max<=0)return;
+      if(c.scrollTop>=max-5)c.scrollTo({top:0,behavior:'smooth'});
+      else c.scrollBy({top:step,behavior:'smooth'});
+    }
+  };
+
+  $('exportBtn').onclick=()=>{
+    const blob=new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`tasks-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  $('importBtn').onclick=()=>$('importFile').click();
+  $('importFile').onchange=e=>{
+    const file=e.target.files[0]; if(!file){return}
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(!Array.isArray(data))throw new Error();
+        const cleaned=data.map(normalizeTask).filter(Boolean);
+        if(cleaned.length===0){alert('В файле нет валидных задач.');e.target.value='';return}
+        openImportDialog(cleaned);
+      }catch{alert('Файл не похож на корректный список задач.')}
+      e.target.value='';
+    };
+    reader.readAsText(file);
+  };
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      if($('importOverlay').classList.contains('visible'))closeImportDialog();
+      else if($('formOverlay').classList.contains('visible'))closeForm();
+      else if($('detailOverlay').classList.contains('visible'))closeDetail();
+      else if(deleteMode){deleteMode=false;render()}
+    }
+  });
+
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){render();checkNotify()}});
+}
+
+function init(){
+  load(); bindEvents(); render(); requestNotifications();
+  setInterval(()=>{render();checkNotify()},60*1000);
+}
+
+init();
+</script>
+</body>
+</html>
