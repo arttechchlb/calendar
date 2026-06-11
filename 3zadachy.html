@@ -19,6 +19,8 @@ radial-gradient(circle at 20% 10%,rgba(122,167,255,.16),transparent 30%),
 radial-gradient(circle at 85% 20%,rgba(112,214,157,.08),transparent 32%),
 linear-gradient(135deg,#0f1116,#1a1d25 55%,#101217);z-index:-1}
 button,input,textarea,select{font-family:inherit}
+#userSelect{color:var(--text)}
+#userSelect option{color:#000;background:#fff}
 .widget{width:96%;max-width:1400px;height:90vh;max-height:820px;background:rgba(25,28,36,.88);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
 .header{height:58px;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);flex-shrink:0}
 .header-title{font-size:16px;font-weight:650;letter-spacing:.2px}
@@ -137,7 +139,7 @@ input:focus,textarea:focus,select:focus{border-color:rgba(122,167,255,.55);box-s
         <option value="tanya">Таня</option>
       </select>
       <button class="actionBtn" id="exportBtn" title="Скачать бэкап">💾</button>
-      <button class="actionBtn" id="importBtn" title="Загрузить бэкап"></button>
+      <button class="actionBtn" id="importBtn" title="Загрузить бэкап">📥</button>
     </div>
   </div>
 
