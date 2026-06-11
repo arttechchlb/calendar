@@ -710,7 +710,7 @@ function bindEvents(){
 
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkNotify()}});
 
-  // === ВЫБОР ПОЛЬЗОВАТЕЛЯ ДЛЯ УВЕДОМЛЕНИЙ ===
+    // === ВЫБОР ПОЛЬЗОВАТЕЛЯ ДЛЯ УВЕДОМЛЕНИЙ ===
   const savedUser = localStorage.getItem('taskWidget_currentUser');
   if(savedUser) $('userSelect').value = savedUser;
 
@@ -722,45 +722,7 @@ function bindEvents(){
     }
   };
   // ==========================================
-}
-
-  $('exportBtn').onclick=()=>{
-    const blob=new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download=`tasks-${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
-
-  $('importBtn').onclick=()=>$('importFile').click();
-  $('importFile').onchange=e=>{
-    const file=e.target.files[0]; if(!file){return}
-    const reader=new FileReader();
-    reader.onload=ev=>{
-      try{
-        const data=JSON.parse(ev.target.result);
-        if(!Array.isArray(data))throw new Error();
-        const cleaned=data.map(normalizeTask).filter(Boolean);
-        if(cleaned.length===0){alert('В файле нет валидных задач.');e.target.value='';return}
-        openImportDialog(cleaned);
-      }catch{alert('Файл не похож на корректный список задач.')}
-      e.target.value='';
-    };
-    reader.readAsText(file);
-  };
-
-  document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'){
-      if($('importOverlay').classList.contains('visible'))closeImportDialog();
-      else if($('formOverlay').classList.contains('visible'))closeForm();
-      else if($('detailOverlay').classList.contains('visible'))closeDetail();
-      else if(deleteMode){deleteMode=false;render()}
-    }
-  });
-
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkNotify()}});
-}
+}   
 
 function init(){
   bindEvents();
@@ -771,7 +733,7 @@ function init(){
   // Если пользователь ещё не выбран — показать подсказку
   if(!localStorage.getItem('taskWidget_currentUser')){
     setTimeout(()=>{
-      alert(' Выберите себя в выпадающем списке "Кто вы?" вверху страницы, чтобы получать уведомления только о своих задачах!');
+      alert('👋 Выберите себя в выпадающем списке "Кто вы?" вверху страницы, чтобы получать уведомления только о своих задачах!');
     }, 1500);
   }
 }
