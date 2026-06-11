@@ -130,9 +130,15 @@ input:focus,textarea:focus,select:focus{border-color:rgba(122,167,255,.55);box-s
   <div class="header">
     <div class="header-title">Задачи</div>
     <div class="header-actions">
-      <button class="actionBtn" id="exportBtn" title="Скачать бэкап">💾</button>
-      <button class="actionBtn" id="importBtn" title="Загрузить бэкап">📥</button>
-    </div>
+  <select id="userSelect" style="height:32px;border-radius:8px;font-size:12px;padding:0 8px;margin-right:8px">
+    <option value="">Кто вы?</option>
+    <option value="oleg">Олег</option>
+    <option value="natasha">Наташа</option>
+    <option value="tanya">Таня</option>
+  </select>
+  <button class="actionBtn" id="exportBtn" title="Скачать бэкап">💾</button>
+  <button class="actionBtn" id="importBtn" title="Загрузить бэкап"></button>
+</div>
   </div>
 
   <main id="content" class="content"></main>
@@ -611,9 +617,16 @@ function sendNotify(t,type,title){
 function checkNotify(){
   const now=new Date();
   if(now.getHours()<10)return;
+  
+  // Получаем текущего пользователя из localStorage
+  const currentUser = localStorage.getItem('taskWidget_currentUser');
+  if(!currentUser) return; // Если не выбран — уведомления не показываем
+  
   const td=todayISO();
   const tm=iso(addDays(today(),1));
-  tasks.forEach(t=>{
+  
+  // Фильтруем задачи только для текущего пользователя
+  tasks.filter(t=>t.owner===currentUser).forEach(t=>{
     if(!t.date)return;
     if(t.date===td)sendNotify(t,'today','Сегодня дедлайн');
     if(t.date===tm)sendNotify(t,'tomorrow','Завтра дедлайн');
@@ -696,6 +709,57 @@ function bindEvents(){
   });
 
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkNotify()}});
+
+  // === ВЫБОР ПОЛЬЗОВАТЕЛЯ ДЛЯ УВЕДОМЛЕНИЙ ===
+  const savedUser = localStorage.getItem('taskWidget_currentUser');
+  if(savedUser) $('userSelect').value = savedUser;
+
+  $('userSelect').onchange = (e) => {
+    localStorage.setItem('taskWidget_currentUser', e.target.value);
+    if(e.target.value) {
+      const userName = OWNERS.find(o=>o.id===e.target.value)?.short || e.target.value;
+      alert('✅ Теперь уведомления будут показываться только для: ' + userName);
+    }
+  };
+  // ==========================================
+}
+
+  $('exportBtn').onclick=()=>{
+    const blob=new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`tasks-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  $('importBtn').onclick=()=>$('importFile').click();
+  $('importFile').onchange=e=>{
+    const file=e.target.files[0]; if(!file){return}
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(!Array.isArray(data))throw new Error();
+        const cleaned=data.map(normalizeTask).filter(Boolean);
+        if(cleaned.length===0){alert('В файле нет валидных задач.');e.target.value='';return}
+        openImportDialog(cleaned);
+      }catch{alert('Файл не похож на корректный список задач.')}
+      e.target.value='';
+    };
+    reader.readAsText(file);
+  };
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      if($('importOverlay').classList.contains('visible'))closeImportDialog();
+      else if($('formOverlay').classList.contains('visible'))closeForm();
+      else if($('detailOverlay').classList.contains('visible'))closeDetail();
+      else if(deleteMode){deleteMode=false;render()}
+    }
+  });
+
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkNotify()}});
 }
 
 function init(){
@@ -703,6 +767,13 @@ function init(){
   render();
   requestNotifications();
   setInterval(checkNotify,60*1000);
+  
+  // Если пользователь ещё не выбран — показать подсказку
+  if(!localStorage.getItem('taskWidget_currentUser')){
+    setTimeout(()=>{
+      alert(' Выберите себя в выпадающем списке "Кто вы?" вверху страницы, чтобы получать уведомления только о своих задачах!');
+    }, 1500);
+  }
 }
 
 init();
