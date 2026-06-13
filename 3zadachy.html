@@ -19,8 +19,6 @@ radial-gradient(circle at 20% 10%,rgba(122,167,255,.16),transparent 30%),
 radial-gradient(circle at 85% 20%,rgba(112,214,157,.08),transparent 32%),
 linear-gradient(135deg,#0f1116,#1a1d25 55%,#101217);z-index:-1}
 button,input,textarea,select{font-family:inherit}
-#userSelect{color:var(--text)}
-#userSelect option{color:#000;background:#fff}
 .widget{width:96%;max-width:1400px;height:90vh;max-height:820px;background:rgba(25,28,36,.88);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
 .header{height:58px;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);flex-shrink:0}
 .header-title{font-size:16px;font-weight:650;letter-spacing:.2px}
@@ -78,8 +76,8 @@ button,input,textarea,select{font-family:inherit}
 .controlBtn.active{background:var(--red);border-color:var(--red);color:white}
 .overlay{position:absolute;inset:0;z-index:10;background:rgba(9,10,13,.68);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transform:scale(.985);transition:.2s}
 .overlay.visible{opacity:1;pointer-events:auto;transform:scale(1)}
-.form,.details,.importBox{width:88%;max-width:520px;max-height:86%;overflow-y:auto;background:#1d212a;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:17px;display:flex;flex-direction:column;gap:10px}
-.formTitle,.detailTitle,.importTitle{font-size:16px;font-weight:750;text-align:center;line-height:1.3}
+.form,.details,.importBox,.trashBox{width:88%;max-width:520px;max-height:86%;overflow-y:auto;background:#1d212a;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:17px;display:flex;flex-direction:column;gap:10px}
+.formTitle,.detailTitle,.importTitle,.trashTitle{font-size:16px;font-weight:750;text-align:center;line-height:1.3}
 input,textarea,select{width:100%;border:1px solid var(--line);background:rgba(255,255,255,.055);color:var(--text);border-radius:12px;outline:none;font-size:14px}
 input{height:42px;padding:0 13px}
 textarea{min-height:92px;resize:vertical;padding:12px 13px;line-height:1.35}
@@ -102,7 +100,7 @@ input:focus,textarea:focus,select:focus{border-color:rgba(122,167,255,.55);box-s
 .owner-dot.auto{background:var(--soft)}
 
 .formError{min-height:16px;color:var(--red);font-size:12px;text-align:center}
-.formActions,.detailActions,.importActions{display:flex;gap:8px}
+.formActions,.detailActions,.importActions,.trashActions{display:flex;gap:8px}
 .formBtn{flex:1;height:40px;border:none;border-radius:12px;font-size:14px;font-weight:650;cursor:pointer}
 .primary{background:var(--blue);color:#10131a}.secondary{background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--line)}.danger{background:var(--red);color:white}
 .primary:hover{filter:brightness(1.06)}.secondary:hover{background:rgba(255,255,255,.1)}.danger:hover{filter:brightness(1.08)}
@@ -114,15 +112,38 @@ input:focus,textarea:focus,select:focus{border-color:rgba(122,167,255,.55);box-s
 .detailRank{margin:2px auto 4px;width:max-content;min-width:60px;text-align:center;padding:7px 12px;border-radius:999px;background:rgba(122,167,255,.12);color:#cfe0ff;font-size:13px;font-weight:750}
 .detailDesc{white-space:pre-wrap;line-height:1.45;font-size:14px;color:#d9dee8;background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:80px}
 
-.importSection{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:12px}
-.importSectionTitle{font-size:11px;font-weight:750;letter-spacing:.7px;text-transform:uppercase;color:var(--soft);margin-bottom:9px}
+.importSection,.trashSection{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:12px}
+.importSectionTitle,.trashSectionTitle{font-size:11px;font-weight:750;letter-spacing:.7px;text-transform:uppercase;color:var(--soft);margin-bottom:9px}
 .importInfo{font-size:13px;color:var(--muted);text-align:center;padding:6px 0}
 .importInfo b{color:var(--text)}
 .importWarn{font-size:12px;color:var(--red);background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.15);border-radius:10px;padding:8px 10px;text-align:center;line-height:1.4}
 
+/* Стили корзины */
+.trash-content{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:14px 16px 12px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.trash-column{display:flex;flex-direction:column;gap:14px;min-width:0}
+.trash-column-header{text-align:center;padding:10px 8px;border-radius:var(--rs);background:linear-gradient(135deg,rgba(255,107,107,.08),rgba(255,255,255,.02));border:1px solid var(--line);flex-shrink:0}
+.trash-column-title{font-size:13px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--red)}
+.trash-column-count{font-size:11px;color:var(--muted);margin-top:3px}
+.trash-row{display:flex;align-items:center;gap:10px;padding:10px 9px;border-radius:12px;border:1px solid transparent;background:rgba(255,255,255,.025);margin-top:7px;transition:background .18s}
+.trash-row:first-of-type{margin-top:0}
+.trash-row:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.08)}
+.trash-main{flex:1;min-width:0}
+.trash-line{font-size:14px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trash-days{width:36px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:750;flex-shrink:0}
+.trash-days.safe{background:rgba(112,214,157,.12);color:#70d69d}
+.trash-days.warn{background:rgba(255,193,7,.12);color:#ffc107}
+.trash-days.danger{background:rgba(255,107,107,.12);color:#ff6b6b}
+.trash-actions{display:flex;gap:6px}
+.trash-btn{width:28px;height:28px;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:transform .18s}
+.trash-btn:hover{transform:scale(1.1)}
+.trash-btn.restore{background:rgba(122,167,255,.15);color:#7aa7ff}
+.trash-btn.delete{background:rgba(255,107,107,.15);color:#ff6b6b}
+
 @media(max-width:900px){
   .content{grid-template-columns:repeat(3,minmax(300px,1fr));overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory}
   .column{scroll-snap-align:start;overflow-y:auto}
+  .trash-content{grid-template-columns:repeat(3,minmax(300px,1fr));overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory}
+  .trash-column{scroll-snap-align:start;overflow-y:auto}
 }
 @media(max-width:480px){.widget{width:100%;height:100vh;max-height:100vh;border-radius:0}.row2{grid-template-columns:1fr}}
 </style>
@@ -153,6 +174,7 @@ input:focus,textarea:focus,select:focus{border-color:rgba(122,167,255,.55);box-s
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </button>
       <button id="deleteBtn" class="controlBtn" title="Удалить">−</button>
+      <button id="trashBtn" class="controlBtn" title="Корзина">🗑</button>
     </div>
   </footer>
 
@@ -213,11 +235,22 @@ input:focus,textarea:focus,select:focus{border-color:rgba(122,167,255,.55);box-s
           <label class="owner-label" data-mode="replace" style="height:44px"><input type="radio" name="importMode" value="replace">🗑 Заменить все</label>
         </div>
       </div>
-      <div id="importWarn" class="importWarn" style="display:none">️ Режим «Заменить все» удалит текущие задачи у всех владельцев!</div>
+      <div id="importWarn" class="importWarn" style="display:none">⚠️ Режим «Заменить все» удалит текущие задачи у всех владельцев!</div>
       <div class="formError" id="importError"></div>
       <div class="importActions">
         <button type="button" id="importCancelBtn" class="formBtn secondary">Отмена</button>
         <button type="button" id="importConfirmBtn" class="formBtn primary">Загрузить</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="trashOverlay" class="overlay">
+    <div class="trashBox" style="max-width:1200px;width:95%">
+      <div class="trashTitle">Корзина</div>
+      <div id="trashContent" class="trash-content"></div>
+      <div class="trashActions">
+        <button id="closeTrashBtn" class="formBtn secondary">Закрыть</button>
+        <button id="emptyTrashBtn" class="formBtn danger">Очистить корзину</button>
       </div>
     </div>
   </div>
@@ -242,6 +275,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const tasksRef = ref(db, 'tasks');
+const trashRef = ref(db, 'trash');
 
 const NOTIFY_KEY='taskWidget_notifications_v1';
 const $=id=>document.getElementById(id);
@@ -253,6 +287,7 @@ const OWNERS=[
 const validOwner=v=>OWNERS.some(o=>o.id===v)?v:'oleg';
 
 let tasks=[];
+let trash=[];
 let deleteMode=false;
 let editId=null;
 let editRankShown=null;
@@ -325,6 +360,14 @@ function save(){
   }).finally(()=>{ isRemoteSync=false; });
 }
 
+function saveTrash(){
+  if(isRemoteSync) return;
+  isRemoteSync=true;
+  set(trashRef, trash).catch(err=>{
+    console.error('Firebase trash save error:', err);
+  }).finally(()=>{ isRemoteSync=false; });
+}
+
 onValue(tasksRef, (snapshot)=>{
   const data = snapshot.val();
   const raw = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
@@ -336,6 +379,20 @@ onValue(tasksRef, (snapshot)=>{
   }
 }, (error)=>{
   console.error('Firebase read error:', error);
+});
+
+onValue(trashRef, (snapshot)=>{
+  const data = snapshot.val();
+  const raw = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
+  const normalized = raw.map(normalizeTask).filter(Boolean);
+  if(JSON.stringify(trash) !== JSON.stringify(normalized)){
+    trash = normalized;
+    if($('trashOverlay').classList.contains('visible')){
+      renderTrash();
+    }
+  }
+}, (error)=>{
+  console.error('Firebase trash read error:', error);
 });
 
 function saveNotified(){
@@ -354,6 +411,15 @@ function sortGeneral(a,b){
 function updateCount(){$('taskCount').textContent=tasks.length}
 
 function removeTaskAnimated(id, rowEl){
+  const task=tasks.find(x=>x.id===id);
+  if(!task) return;
+  
+  // Добавляем в корзину
+  task.deletedAt=todayISO();
+  trash.push(task);
+  saveTrash();
+  
+  // Удаляем из основного списка
   rowEl.classList.add('deleting');
   setTimeout(()=>{
     tasks=tasks.filter(x=>x.id!==id);
@@ -562,6 +628,130 @@ function confirmImport(){
   save(); deleteMode=false; closeImportDialog();
 }
 
+// === КОРЗИНА ===
+function getDaysUntilDelete(task){
+  if(!task.deletedAt) return 30;
+  const daysPassed=daysBetween(task.deletedAt, addDays(today(), 1));
+  return Math.max(1, 30 - daysPassed);
+}
+
+function getDaysClass(days){
+  if(days > 10) return 'safe';
+  if(days > 5) return 'warn';
+  return 'danger';
+}
+
+function renderTrash(){
+  const container=$('trashContent');
+  container.innerHTML='';
+  
+  OWNERS.forEach(owner=>{
+    const col=document.createElement('div');
+    col.className='trash-column';
+    
+    const ownerTrash=trash.filter(t=>t.owner===owner.id);
+    // Сортировка: недавно удалённые сверху (по deletedAt desc)
+    ownerTrash.sort((a,b)=>{
+      if(!a.deletedAt && !b.deletedAt) return 0;
+      if(!a.deletedAt) return 1;
+      if(!b.deletedAt) return -1;
+      return b.deletedAt.localeCompare(a.deletedAt);
+    });
+    
+    const header=document.createElement('div');
+    header.className='trash-column-header';
+    header.innerHTML=`<div class="trash-column-title">Корзина ${owner.short}</div><div class="trash-column-count">${ownerTrash.length} ${plural(ownerTrash.length,'задача','задачи','задач')}</div>`;
+    col.appendChild(header);
+    
+    const block=document.createElement('section');
+    block.className='block';
+    
+    if(ownerTrash.length===0){
+      block.innerHTML='<div class="empty">Корзина пуста</div>';
+    }else{
+      ownerTrash.forEach(t=>{
+        const row=document.createElement('div');
+        row.className='trash-row';
+        const days=getDaysUntilDelete(t);
+        const daysClass=getDaysClass(days);
+        
+        row.innerHTML=`
+          <div class="trash-main">
+            <div class="trash-line">
+              <span class="title">${esc(t.title)}</span>
+            </div>
+          </div>
+          <div class="trash-actions">
+            <button class="trash-btn restore" title="Восстановить">↩</button>
+            <button class="trash-btn delete" title="Удалить навсегда">×</button>
+          </div>
+          <div class="trash-days ${daysClass}">${days}</div>
+        `;
+        
+        row.querySelector('.restore').onclick=(e)=>{
+          e.stopPropagation();
+          restoreTask(t.id);
+        };
+        row.querySelector('.delete').onclick=(e)=>{
+          e.stopPropagation();
+          deleteTaskForever(t.id);
+        };
+        
+        block.appendChild(row);
+      });
+    }
+    
+    col.appendChild(block);
+    container.appendChild(col);
+  });
+}
+
+function restoreTask(id){
+  const task=trash.find(x=>x.id===id);
+  if(!task) return;
+  
+  // Удаляем из корзины
+  trash=trash.filter(x=>x.id!==id);
+  delete task.deletedAt;
+  
+  // Добавляем обратно в задачи
+  tasks.push(task);
+  
+  save();
+  saveTrash();
+}
+
+function deleteTaskForever(id){
+  if(!confirm('Удалить задачу навсегда? Это действие нельзя отменить.')) return;
+  
+  trash=trash.filter(x=>x.id!==id);
+  saveTrash();
+}
+
+function emptyTrash(){
+  if(trash.length===0){
+    alert('Корзина уже пуста');
+    return;
+  }
+  if(!confirm(`Удалить навсегда все ${trash.length} задач из корзины?`)) return;
+  
+  trash=[];
+  saveTrash();
+}
+
+function cleanOldTrash(){
+  const td=today();
+  const cutoff=addDays(td, -30);
+  const cutoffISO=iso(cutoff);
+  
+  const oldTrash=trash.filter(t=>t.deletedAt && t.deletedAt < cutoffISO);
+  if(oldTrash.length > 0){
+    trash=trash.filter(t=>!t.deletedAt || t.deletedAt >= cutoffISO);
+    saveTrash();
+    console.log(`Удалено ${oldTrash.length} старых задач из корзины`);
+  }
+}
+
 function requestNotifications(){
   if(!('Notification' in window))return;
   if(Notification.permission==='default')Notification.requestPermission().then(()=>checkNotify());
@@ -632,7 +822,7 @@ function bindEvents(){
   };
 
   $('exportBtn').onclick=()=>{
-    const blob=new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});
+    const blob=new Blob([JSON.stringify({tasks,trash},null,2)],{type:'application/json'});
     const a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
     a.download=`tasks-${new Date().toISOString().slice(0,10)}.json`;
@@ -647,8 +837,8 @@ function bindEvents(){
     reader.onload=ev=>{
       try{
         const data=JSON.parse(ev.target.result);
-        if(!Array.isArray(data))throw new Error();
-        const cleaned=data.map(normalizeTask).filter(Boolean);
+        if(!Array.isArray(data.tasks))throw new Error();
+        const cleaned=data.tasks.map(normalizeTask).filter(Boolean);
         if(cleaned.length===0){alert('В файле нет валидных задач.');e.target.value='';return}
         openImportDialog(cleaned);
       }catch{alert('Файл не похож на корректный список задач.')}
@@ -657,16 +847,27 @@ function bindEvents(){
     reader.readAsText(file);
   };
 
+  // Корзина
+  $('trashBtn').onclick=()=>{
+    renderTrash();
+    $('trashOverlay').classList.add('visible');
+  };
+  $('closeTrashBtn').onclick=()=>{
+    $('trashOverlay').classList.remove('visible');
+  };
+  $('emptyTrashBtn').onclick=emptyTrash;
+
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){
-      if($('importOverlay').classList.contains('visible'))closeImportDialog();
+      if($('trashOverlay').classList.contains('visible'))$('trashOverlay').classList.remove('visible');
+      else if($('importOverlay').classList.contains('visible'))closeImportDialog();
       else if($('formOverlay').classList.contains('visible'))closeForm();
       else if($('detailOverlay').classList.contains('visible'))closeDetail();
       else if(deleteMode){deleteMode=false;render()}
     }
   });
 
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkNotify()}});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkNotify();cleanOldTrash()}});
 
   const savedUser = localStorage.getItem('taskWidget_currentUser');
   if(savedUser) $('userSelect').value = savedUser;
@@ -685,6 +886,9 @@ function init(){
   render();
   requestNotifications();
   setInterval(checkNotify,60*1000);
+  setInterval(cleanOldTrash,60*60*1000); // Проверка каждый час
+  
+  cleanOldTrash(); // Проверить при загрузке
   
   if(!localStorage.getItem('taskWidget_currentUser')){
     setTimeout(()=>{
