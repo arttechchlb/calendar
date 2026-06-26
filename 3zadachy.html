@@ -380,20 +380,22 @@ function normalizeTask(x){
 }
 
 function save(){
-  if(isRemoteSync) return;
   isRemoteSync=true;
   set(tasksRef, tasks).catch(err=>{
     console.error('Firebase save error:', err);
     alert('Ошибка синхронизации. Проверьте интернет или конфиг Firebase.');
-  }).finally(()=>{ isRemoteSync=false; });
+  }).finally(()=>{ 
+    setTimeout(()=>{ isRemoteSync=false; }, 500); 
+  });
 }
 
 function saveTrash(){
-  if(isRemoteSync) return;
   isRemoteSync=true;
   set(trashRef, trash).catch(err=>{
     console.error('Firebase trash save error:', err);
-  }).finally(()=>{ isRemoteSync=false; });
+  }).finally(()=>{ 
+    setTimeout(()=>{ isRemoteSync=false; }, 500); 
+  });
 }
 
 onValue(tasksRef, (snapshot)=>{
@@ -557,6 +559,8 @@ function openForm(id=null){
     setOwnerRadio(null);
     setPriority(null);
     document.querySelectorAll('#ownerRow .owner-label').forEach(l=>l.classList.remove('error'));
+    // Автоматически подставляем текущую дату
+    $('dateInput').value = todayISO();
   }
   $('formOverlay').classList.add('visible');
   setTimeout(()=>$('titleInput').focus(),50);
