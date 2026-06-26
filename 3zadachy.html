@@ -381,6 +381,7 @@ function normalizeTask(x){
 
 function save(){
   isRemoteSync=true;
+  lastSavedHash = tasksHash(tasks); // Запоминаем хэш ДО отправки
   set(tasksRef, tasks).catch(err=>{
     console.error('Firebase save error:', err);
     alert('Ошибка синхронизации. Проверьте интернет или конфиг Firebase.');
@@ -388,7 +389,6 @@ function save(){
     setTimeout(()=>{ isRemoteSync=false; }, 500); 
   });
 }
-
 function saveTrash(){
   isRemoteSync=true;
   set(trashRef, trash).catch(err=>{
@@ -398,12 +398,26 @@ function saveTrash(){
   });
 }
 
+let lastSavedHash = '';
+
+function tasksHash(arr){
+  // Надёжный хэш: сортируем по id и берём только ключевые поля
+  return arr
+    .map(t => `${t.id}:${t.title}:${t.owner}:${t.priority}:${t.date}:${t.time}`)
+    .sort()
+    .join('|');
+}
+
 onValue(tasksRef, (snapshot)=>{
   const data = snapshot.val();
   const raw = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
   const normalized = raw.map(normalizeTask).filter(Boolean);
-  if(JSON.stringify(tasks) !== JSON.stringify(normalized)){
+  const newHash = tasksHash(normalized);
+  
+  // Обновляем только если данные реально изменились
+  if(newHash !== lastSavedHash){
     tasks = normalized;
+    lastSavedHash = newHash;
     render();
     updateCount();
   }
@@ -560,7 +574,7 @@ function openForm(id=null){
     setPriority(null);
     document.querySelectorAll('#ownerRow .owner-label').forEach(l=>l.classList.remove('error'));
     // Автоматически подставляем текущую дату
-    $('dateInput').value = todayISO();
+    $('dateInput').value = `${today().getFullYear()}-01-01`;
   }
   $('formOverlay').classList.add('visible');
   setTimeout(()=>$('titleInput').focus(),50);
