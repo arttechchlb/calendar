@@ -80,6 +80,8 @@ button,input,textarea,select{font-family:inherit}
 .formTitle,.detailTitle,.importTitle,.trashTitle{font-size:16px;font-weight:750;text-align:center;line-height:1.3}
 input,textarea,select{width:100%;border:1px solid var(--line);background:rgba(255,255,255,.055);color:var(--text);border-radius:12px;outline:none;font-size:14px}
 input{height:42px;padding:0 13px}
+#dayInput,#monthInput{height:42px}
+#dayInput{text-align:center}
 textarea{min-height:92px;resize:vertical;padding:12px 13px;line-height:1.35}
 select{height:42px;padding:0 10px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%239aa3b2' d='M6 8L0 0h12z'/></svg>");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
 input:focus,textarea:focus,select:focus{border-color:rgba(122,167,255,.55);box-shadow:0 0 0 3px rgba(122,167,255,.1)}
@@ -209,7 +211,24 @@ input:focus,textarea:focus,select:focus{border-color:rgba(122,167,255,.55);box-s
       </div>
       <input id="titleInput" type="text" maxlength="90" placeholder="Задача" required />
       <div class="row2">
-        <input id="dateInput" type="date" />
+        <div style="display:flex;gap:6px">
+          <input id="dayInput" type="number" min="1" max="31" placeholder="День" style="width:70px" />
+          <select id="monthInput" style="flex:1">
+            <option value="">Месяц</option>
+            <option value="01">Январь</option>
+            <option value="02">Февраль</option>
+            <option value="03">Март</option>
+            <option value="04">Апрель</option>
+            <option value="05">Май</option>
+            <option value="06">Июнь</option>
+            <option value="07">Июль</option>
+            <option value="08">Август</option>
+            <option value="09">Сентябрь</option>
+            <option value="10">Октябрь</option>
+            <option value="11">Ноябрь</option>
+            <option value="12">Декабрь</option>
+          </select>
+        </div>
         <input id="timeInput" type="time" />
       </div>
       <div class="priority-row" id="priorityRow">
@@ -564,7 +583,15 @@ function openForm(id=null){
     setOwnerRadio(t.owner||'oleg');
     setPriority(editPriority);
     $('titleInput').value=t.title;
-    $('dateInput').value=t.date||'';
+    // Разбираем дату на день и месяц
+    if(t.date && /^\d{4}-\d{2}-\d{2}$/.test(t.date)){
+      const [,m,d]=t.date.split('-');
+      $('dayInput').value=parseInt(d,10);
+      $('monthInput').value=m;
+    }else{
+      $('dayInput').value='';
+      $('monthInput').value='';
+    }
     $('timeInput').value=t.time||'';
     $('descInput').value=t.desc||'';
   }else{
@@ -572,9 +599,10 @@ function openForm(id=null){
     $('formTitle').textContent='Новая задача';
     setOwnerRadio(null);
     setPriority(null);
+    $('dayInput').value='';
+    $('monthInput').value='';
+    $('timeInput').value='';
     document.querySelectorAll('#ownerRow .owner-label').forEach(l=>l.classList.remove('error'));
-    // Автоматически подставляем текущую дату
-    $('dateInput').value = `${today().getFullYear()}-01-01`;
   }
   $('formOverlay').classList.add('visible');
   setTimeout(()=>$('titleInput').focus(),50);
@@ -594,7 +622,8 @@ function submitForm(){
   const owner=selectedOwner();
   const priority=getSelectedPriority();
   const title=$('titleInput').value.trim();
-  const date=$('dateInput').value;
+  const day=$('dayInput').value;
+  const month=$('monthInput').value;
   const time=$('timeInput').value;
   const desc=$('descInput').value.trim();
   const err=$('formError'); err.textContent='';
@@ -623,17 +652,28 @@ function submitForm(){
   }
 
   if(!title){err.textContent='Введите задачу';return}
-  if(date && !validDate(date)){err.textContent='Некорректная дата';return}
+  
+  // Собираем дату: если указан день И месяц — подставляем текущий год
+  let date='';
+  if(day && month){
+    const d=parseInt(day,10);
+    if(d<1||d>31){err.textContent='День должен быть от 1 до 31';return}
+    date=`${today().getFullYear()}-${month}-${pad(d)}`;
+    if(!validDate(date)){err.textContent='Некорректная дата';return}
+  }else if(day || month){
+    err.textContent='Укажите и день, и месяц (или оставьте оба пустыми)';return;
+  }
+  
   if(time && !validTime(time)){err.textContent='Некорректное время';return}
 
   if(editId){
     const t=tasks.find(x=>x.id===editId); if(!t)return;
-    t.title=title; t.date=date||''; t.time=time||''; t.desc=desc; t.owner=owner;
+    t.title=title; t.date=date; t.time=time||''; t.desc=desc; t.owner=owner;
     t.priority=priority;
   }else{
     tasks.push({
       id:Date.now().toString(36)+Math.random().toString(36).slice(2,8),
-      title,date:date||'',time:time||'',owner,priority,desc,createdAt:new Date().toISOString()
+      title,date,time:time||'',owner,priority,desc,createdAt:new Date().toISOString()
     });
   }
   save(); closeForm();
